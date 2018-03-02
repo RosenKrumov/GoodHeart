@@ -1,0 +1,20 @@
+include header.pug
+
+html
+  head
+    link(rel='stylesheet', href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", type='text/css')
+    title=title
+  body
+    +header-include('Charities')
+    main
+      div.row.text-center
+        h1 Charities
+      div.col-sm-3
+      div.col-sm-6.text-center
+        each charity in charities
+          p.text-left Description: #{charity.description} 
+          img(src=charity.picture alt='#{charity.picture}' height="150" width="150")
+          hr
+    footer
+      div.col-sm-12.text-center
+        h5 GoodHeart - Javascript Ethereum DApp

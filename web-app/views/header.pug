@@ -1,0 +1,29 @@
+mixin header-include(activePage)
+  header
+    nav.navbar.navbar-default
+      div.container-fluid
+        div.navbar-header
+          a.navbar-brand(href="/"): h3 GoodHeart
+        ul.nav.navbar-nav
+          if activePage=='Home'
+            li.active
+              a(href="/"): h3 Home
+          else
+            li
+              a(href="/"): h3 Home
+          
+          if activePage=='Charities'
+            li.active
+              a(href="/charities"): h3 View Charities
+          else
+            li
+              a(href="/charities"): h3 View Charities
+          
+          if activePage=='AddCharity'
+            li.active
+              a(href="/charities/add"): h3 Submit a charity
+          else
+            li
+              a(href="/charities/add"): h3 Submit a charity
+    div.jumbotron.text-center
+        h1=message
