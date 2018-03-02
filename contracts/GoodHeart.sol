@@ -12,6 +12,7 @@ contract GoodHeart {
 
 	struct Charity {
 		address representative;
+		string name;
 		uint totalFundsRequest;
 		bool isFunded;
 	}
@@ -36,7 +37,7 @@ contract GoodHeart {
 	}
 	
 	modifier hasMoneyforCharity(uint _id) {
-		require(this.balance > currentFundsForCharity[_id] && currentFundsForCharity[_id] > 0);
+		require(this.balance >= currentFundsForCharity[_id] && currentFundsForCharity[_id] > 0);
 		_;
 	}
 	
@@ -49,9 +50,11 @@ contract GoodHeart {
 		owner = msg.sender;
 	}
 
-	function submitCharity(uint _totalFundsRequest) public {
-		uint id = charities.push(Charity(msg.sender, _totalFundsRequest, false));
+	function submitCharity(string _name, uint _totalFundsRequest) public returns(uint) {
+		uint id = charities.push(Charity(msg.sender, _name, _totalFundsRequest * 1 ether, false));
 		currentFundsForCharity[id] = 0;
+
+		return id;
 	}
 
 	function giveMoneyForCharity(uint _charityId) public payable 
@@ -77,13 +80,18 @@ contract GoodHeart {
 			_grantMoneyToRepresenter(charities[_charityId].representative, _charityId);
 		}
 	}	
+
+	function getAllCharities() public view returns(Charity[]) {
+		return charities;
+	}
 	
 	function () public {
 	    revert();
 	}
 
 	function _grantMoneyToRepresenter(address _representative, uint _charityId) private hasMoneyforCharity(_charityId) {
+	    uint fundsToTransfer = currentFundsForCharity[_charityId];
 		currentFundsForCharity[_charityId] = 0;
-		_representative.transfer(currentFundsForCharity[_charityId]);
+		_representative.transfer(fundsToTransfer);
 	}
 }
