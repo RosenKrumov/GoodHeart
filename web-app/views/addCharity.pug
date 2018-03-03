@@ -5,7 +5,8 @@ html
     link(rel='stylesheet', href="/web-app/views/style.css", type='text/css')
     link(rel='stylesheet', href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", type='text/css')
     script(src='https://code.jquery.com/jquery-3.3.1.min.js')
-    script(src='/web-app/client.js')
+    script(src='/web-app/client-side/web3-utils.js')
+    script(src='/web-app/client-side/add-charity.js')
     title=title
   body
     +header-include('AddCharity')
@@ -25,6 +26,9 @@ html
         div.form-group
           label(for='name') Name:
           input.form-control(type='text', id='name', name='name')
+        div.form-group
+          label(for='representativeName') Your name:
+          input.form-control(type='text', id='representativeName', name='representativeName')
         div.form-group
           label(for='description') Description:
           textarea.form-control(rows='5', id='description', name='description', style='resize: none')

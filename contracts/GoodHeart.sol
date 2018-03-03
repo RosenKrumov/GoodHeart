@@ -9,10 +9,12 @@ pragma solidity ^0.4.19;
  */
 
 contract GoodHeart {
+	uint8 constant PAGE_SIZE = 5; 
 
 	struct Charity {
 		address representative;
-		string name;
+		string representativeName;
+		string charityName;
 		uint totalFundsRequest;
 		bool isFunded;
 	}
@@ -21,8 +23,11 @@ contract GoodHeart {
 	Charity[] public charities;
 	mapping (uint => uint) public currentFundsForCharity;
 
+	event CharityCreated(uint id);
+	
+
 	modifier onlyOwner() {
-		require(msg.sender == owner);
+		require(msg.sender == owner);	
 		_;
 	}
 
@@ -50,11 +55,11 @@ contract GoodHeart {
 		owner = msg.sender;
 	}
 
-	function submitCharity(string _name, uint _totalFundsRequest) public returns(uint) {
-		uint id = charities.push(Charity(msg.sender, _name, _totalFundsRequest * 1 ether, false));
+	function submitCharity(string _name, string _representativeName, uint _totalFundsRequest) public {
+		uint id = charities.push(Charity(msg.sender, _representativeName, _name, _totalFundsRequest * 1 ether, false));
 		currentFundsForCharity[id] = 0;
 
-		return id;
+		CharityCreated(id);
 	}
 
 	function giveMoneyForCharity(uint _charityId) public payable 
@@ -81,8 +86,29 @@ contract GoodHeart {
 		}
 	}	
 
-	function getAllCharities() public view returns(Charity[]) {
-		return charities;
+	function getCharity(uint _index) public view returns(address, string, string, uint, bool, uint) {
+		require(charities.length > _index);
+		Charity storage charity = charities[_index];
+		uint totalFundsRequestInEther = charity.totalFundsRequest / 1 ether;
+		return (charity.representative, charity.representativeName, charity.charityName, totalFundsRequestInEther, charity.isFunded, _index);
+	}
+
+	function getCharityIdByName(string _name) public view returns(uint, bool) {
+		uint id = 0;
+		bool found = false;
+		
+		for(uint i = 0; i < charities.length; i++) {
+			if(keccak256(charities[i].charityName) == keccak256(_name)) {
+				id = i;
+				found = true;
+			}
+		}
+
+		return (id, found);
+	}
+
+	function getCharitiesCount() public view returns(uint) {
+		return charities.length;
 	}
 	
 	function () public {
