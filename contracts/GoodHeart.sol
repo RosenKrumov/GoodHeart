@@ -51,12 +51,22 @@ contract GoodHeart {
 	    _;
 	}
 
+	modifier charitySubmitDataCheck(string _name, string _representativeName, uint _totalFundsRequest) {
+		require (keccak256(_name) != keccak256("") && 
+				keccak256(_representativeName) != keccak256("") &&
+				_totalFundsRequest != 0);
+
+		_;
+	}
+
 	function GoodHeart () public{
 		owner = msg.sender;
 	}
 
-	function submitCharity(string _name, string _representativeName, uint _totalFundsRequest) public {
-		uint id = charities.push(Charity(msg.sender, _representativeName, _name, _totalFundsRequest * 1 ether, false));
+	function submitCharity(string _name, string _representativeName, uint _totalFundsRequest) public 
+			charitySubmitDataCheck(_name, _representativeName, _totalFundsRequest) {
+		
+		uint id = charities.push(Charity(msg.sender, _representativeName, _name, _totalFundsRequest, false));
 		currentFundsForCharity[id] = 0;
 
 		CharityCreated(id);
@@ -86,11 +96,12 @@ contract GoodHeart {
 		}
 	}	
 
-	function getCharity(uint _index) public view returns(address, string, string, uint, bool, uint) {
+	function getCharity(uint _index) public view returns(address, string, string, uint, bool, uint, uint) {
 		require(charities.length > _index);
 		Charity storage charity = charities[_index];
 		uint totalFundsRequestInEther = charity.totalFundsRequest / 1 ether;
-		return (charity.representative, charity.representativeName, charity.charityName, totalFundsRequestInEther, charity.isFunded, _index);
+		uint currentCollectedFunds = currentFundsForCharity[_index] / 1 ether;
+		return (charity.representative, charity.representativeName, charity.charityName, totalFundsRequestInEther, charity.isFunded, _index, currentCollectedFunds);
 	}
 
 	function getCharityIdByName(string _name) public view returns(uint, bool) {

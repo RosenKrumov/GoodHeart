@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(async function() {
 	$('main > section').hide();
 
 	$('#addCharityButton').click(addCharity);
@@ -29,6 +29,12 @@ $(document).ready(function() {
 	});
 
 	function addCharity() {
+		var charityFunds = $.trim($('#funds').val());
+		var representativeName = $.trim($('#representativeName').val());
+		var charityName = $.trim($('#name').val());
+		var description = $.trim($('#description').val());
+		var contract = web3.eth.contract(contractABI).at(contractAddress);
+
 		if ($.trim($('#description').val()) == '' || 
 			$.trim($('#funds').val()) == '' ||
 			$.trim($('#name').val()) == '' ||
@@ -40,12 +46,35 @@ $(document).ready(function() {
 			return showError("Please install MetaMask to access the Ethereum Web3 API from your web browser.");
 		}
 
-		var charityFunds = $('#funds').val();
-		var representativeName = $('#representativeName').val();
-		var charityName = $('#name').val();
-		var description = $('#description').val();
-		var contract = web3.eth.contract(contractABI).at(contractAddress);
+		// contract.submitCharity(charityName, representativeName, web3.toWei(charityFunds), function(err, res) {
+		// 	if (err) {
+		// 		return showError("Smart contract call failed: " + err);
+		// 	}
 
+		// 	showInfo("Charity submitted successfully!");
+
+		// 	contract.getCharityIdByName(charityName, function(err, res) {
+		// 		if (err) {
+		// 			return showError("Error: " + err);
+		// 		}
+
+		// 		console.log(res);
+
+		// 		var charityId = res[0].c[0];
+
+		// 		$.ajax({
+		// 			url: 'http://localhost:8001/addCharity',
+		// 			type: 'GET',
+		// 			contentType: "application/json",
+		// 			data: {
+		// 			    description: description,
+		// 			    charityId: charityId
+		// 			}
+		// 		});
+		// 	});
+		// });
+
+		// TODO START
 		// contract.allEvents({fromBlock: 0}).get((e, res) => console.log(res))
 
 		// contract.CharityCreated({}, {fromBlock: 0}).watch((error, result) => {
@@ -54,31 +83,55 @@ $(document).ready(function() {
 		//   else
 		//     console.log('CharityCreated: ' + JSON.stringify(result.args));
 		// });
+		// TODO END
 
-		contract.submitCharity(charityName, representativeName, charityFunds, function(err, res) {
+		contract.getCharityIdByName(charityName, async function(err, res) {
 			if (err) {
-				return showError("Smart contract call failed: " + err);
+				return showError("Error: " + err);
 			}
 
-			showInfo("Charity submitted successfully!");
+			var charityExists = res[1];
 
-			contract.getCharityIdByName(charityName, function(err, res) {
-				if (err) {
-					return showError("Error: " + err);
-				}
-
-				var charityId = res[0].c[0];
-
-				$.ajax({
-					url: 'http://localhost:8001/addCharity',
-					type: 'GET',
-					contentType: "application/json",
-					data: {
-					    description: description,
-					    charityId: charityId
+			if (!charityExists) {
+				contract.submitCharity(charityName, representativeName, web3.toWei(charityFunds), async function(err1, res1) {
+					if (err1) {
+						return showError("Smart contract call failed: " + err1);
 					}
+
+					await contract.getCharityIdByName(charityName, function(error, result) {
+						if (error) {
+							return showError("Error: " + error);
+						}
+
+						console.log(result);
+
+						var charityId = result[0].c[0];
+
+						$.ajax({
+							url: 'http://localhost:8001/addCharity',
+							type: 'GET',
+							contentType: "application/json",
+							data: {
+							    description: description,
+							    charityId: charityId
+							},
+							success: async function(data) {
+								console.log(data);
+								var jsonData = JSON.parse(data);
+								showInfo(jsonData.success);
+								$("#loadingBox").hide();
+							},
+							error: async function(data) {
+								console.log(data);
+								showError(data.error);
+								$("#loadingBox").hide();	
+							}
+						});
+					});
 				});
-			});
+			} else {
+				showError("Charity with such name exists!");
+			}
 		});
 	}
 });

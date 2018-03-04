@@ -1,0 +1,32 @@
+include header.pug
+
+html
+  head
+    link(rel='stylesheet', href="/web-app/views/style.css", type='text/css')
+    link(rel='stylesheet', href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", type='text/css')
+    script(src='https://code.jquery.com/jquery-3.3.1.min.js')
+    script(src='/web-app/client-side/web3-utils.js')
+    script(src='/web-app/client-side/get-charity.js')
+    title=title
+  body
+    +header-include('Charities')
+    main
+      section#loadingBox
+        p Loading ...
+      section#infoBox
+        header x
+        p Info
+      section#errorBox
+        header x
+        p Info
+      div.row.text-center
+        h1 Charity 
+          span#charityId #{charityId}
+          span  - 
+          span#isFound #{status}
+        hr
+      div.col-sm-3
+      div.col-sm-6.text-center#charityContainer
+    footer
+      div.col-sm-12.text-center
+        h5 GoodHeart - Javascript Ethereum DApp

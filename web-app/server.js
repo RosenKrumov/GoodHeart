@@ -35,16 +35,52 @@ var initHttpServer = () => {
 		res.send(allCharities);
 	});
 
+	app.get('/getCharity', function(req, res) {
+		var charityId = req.query.charityId.trim();
+		var charity = getCharity(charities_folder, charityId);
+		res.send(charity);
+	})
+
 	app.get('/charities/add', function(req, res) {
 		res.render('../web-app/views/addCharity', {title: 'GoodHeart', message: 'GoodHeart Charity Organization'});
 	});
 
 	app.get('/addCharity', function(req, res) {
 		console.log("Adding charity folder...");
-		addCharity(charities_folder, req.query.description, req.query.charityId);
+
+		var description = req.query.description.trim();
+		var charityId = req.query.charityId.trim(); 
+
+		console.log(description);
+
+		if (req.query.description == '') {
+			res.send('{"error" : "Charity description is empty", "status" : 400}');
+		} else {
+			var addedSuccessfully = addCharity(charities_folder, req.query.description, req.query.charityId);
+			console.log("FUNC RETURN VAL IS: " + addedSuccessfully);
+			if (addedSuccessfully) {
+				res.send('{"success" : "Charity added successfully", "status" : 200}');	
+			} else {
+				res.send('{"error" : "Charity could not be added", "status" : 400}');
+			}
+		}
+	});
+
+	app.get('/charities/:id', function(req, res) {
+		var id = req.params.id;
+		if (id == parseInt(id, 10)) {
+		    res.render('../web-app/views/charity', {title: 'GoodHeart', message: 'GoodHeart Charity Organization', charityId: id, status: 'OK'});
+		} else {
+		    res.render('../web-app/views/charity', {title: 'GoodHeart', message: 'GoodHeart Charity Organization', charityId: id, status: 'Invalid'});
+		}
+
 	});
 
 	app.listen(http_port, () => console.log('Listening http on port ' + http_port));
+}
+
+function checkIfCharityExistsInBlockchain() {
+	// TODO
 }
 
 function addCharity(dir, charityDescription, charityId) {
@@ -56,20 +92,20 @@ function addCharity(dir, charityDescription, charityId) {
 	console.log("Directory exists: " + fs.existsSync(directoryToCreate));
 
 	if (!fs.existsSync(directoryToCreate)){
-	    fs.mkdirSync(directoryToCreate);
+	    try {
+		    fs.mkdirSync(directoryToCreate);
+	    	fs.writeFileSync(directoryToCreate + "/" + fileToCreate, charityDescription);
+	    } catch(err) {
+	    	return false;
+	    }
 
-    	fs.writeFile(directoryToCreate + "/" + fileToCreate, charityDescription, function(err) {
-			if(err) {
-		        return console.log(err);
-		    }
-
-		    console.log("The file was saved!");
-		});
+	    return true;
+	} else {
+		return false;
 	}
 }
 
 function getAllCharities(dir) {
-
     var allCharities = [];
 
     // get all 'files' in this directory
@@ -99,6 +135,26 @@ function getAllCharities(dir) {
     });
 
     return allCharities;
+}
+
+function getCharity(dir, charityId) {
+	var charityDir = `${dir}/${charityId}`;
+	var charityFiles = fs.readdirSync(charityDir);
+	var charityJson = {};
+
+	charityFiles.map(charityFile => {
+        if (charityFile.endsWith(".txt")) {
+            var charityFilePath = charityDir+ "/" + charityFile;
+            var content = fs.readFileSync(charityFilePath, 'utf-8');
+            content = html_sanitizer(content);
+            charityJson['description'] = content;
+        } else if (charityFile.indexOf("picture") > -1) {
+            var charityPicturePath = charities_images_paths + "/" + charityId + "/" + charityFile
+            charityJson['picture'] = charityPicturePath;
+        }
+	});
+
+	return charityJson;
 }
 
 initHttpServer();
