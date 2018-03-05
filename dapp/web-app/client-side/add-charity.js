@@ -1,3 +1,14 @@
+var entityMap = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+  '/': '&#x2F;',
+  '`': '&#x60;',
+  '=': '&#x3D;'
+};
+
 $(document).ready(async function() {
 	$('main > section').hide();
 
@@ -19,6 +30,13 @@ $(document).ready(async function() {
 		});
 	}
 
+	//Moustache.js
+	function escapeHtml (string) {
+		return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+			return entityMap[s];
+		});
+	}
+
 	$(document).on({
 		ajaxStart: function () {
 			$("#loadingBox").show()
@@ -30,8 +48,8 @@ $(document).ready(async function() {
 
 	async function addCharity() {
 		var charityFunds = $.trim($('#funds').val());
-		var representativeName = $.trim($('#representativeName').val());
-		var charityName = $.trim($('#name').val());
+		var representativeName = escapeHtml($.trim($('#representativeName').val()));
+		var charityName = escapeHtml($.trim($('#name').val()));
 		var description = $.trim($('#description').val());
 		var contract = web3.eth.contract(contractABI).at(contractAddress);
 
@@ -41,6 +59,9 @@ $(document).ready(async function() {
 			$.trim($('#representativeName').val()) == '') {
 			return showError("Inputs cannot be left blank");
 		}
+
+		console.log(representativeName)
+		console.log(charityName)
 
 		if (typeof web3 === 'undefined') {
 			return showError("Please install MetaMask to access the Ethereum Web3 API from your web browser.");

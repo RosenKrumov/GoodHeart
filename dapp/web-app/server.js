@@ -66,6 +66,26 @@ var initHttpServer = () => {
 		}
 	});
 
+	app.get('/addCharityContribution', function(req, res) {
+		var request = req.query;
+		var description = request.description.trim();
+		var imageUrl = request.imageUrl.trim();
+		var charityId = request.charityId.trim();
+		var contributionId = request.contributionId;
+
+
+		if (description == '' || charityId == '' || contributionId == '' || imageUrl == '') {
+			res.send('{"error" : "Invalid data provided", "status": 400}');
+		} else {
+			var addedSuccessfully = addCharityContribution(charityId, contributionId, description, imageUrl);
+			if (addedSuccessfully) {
+				res.send('{"success": "Contribution added successfully for approval", "status": 200}');
+			} else {
+				res.send('{"error": "Contribution could not be added", "status": 400}');
+			}
+		}
+	});
+
 	app.get('/charities/:id', function(req, res) {
 		var id = req.params.id;
 		if (id == parseInt(id, 10)) {
@@ -79,10 +99,6 @@ var initHttpServer = () => {
 	app.listen(http_port, () => console.log('Listening http on port ' + http_port));
 }
 
-function checkIfCharityExistsInBlockchain() {
-	// TODO
-}
-
 function addCharity(dir, charityDescription, charityId) {
 	var directoryToCreate = `${dir}/${charityId}`;
 	var fileToCreate = `${charityId}_description.txt`;
@@ -94,6 +110,8 @@ function addCharity(dir, charityDescription, charityId) {
 	if (!fs.existsSync(directoryToCreate)){
 	    try {
 		    fs.mkdirSync(directoryToCreate);
+		    fs.mkdirSync(directoryToCreate + "/approvedContributions");
+		    fs.mkdirSync(directoryToCreate + "/notApprovedContributions");
 	    	fs.writeFileSync(directoryToCreate + "/" + fileToCreate, charityDescription);
 	    } catch(err) {
 	    	return false;
@@ -109,6 +127,47 @@ function addCharity(dir, charityDescription, charityId) {
 
 	    return true;
 	}
+}
+
+function addCharityContribution(charityId, contributionId, contributionDescription, contributionImageUrl) {
+	var charityFolder = `${charities_folder}/${charityId}`;
+	var contributionFolder = `${charityFolder}/notApprovedContributions/${contributionId}`;
+
+	if (fs.existsSync(charityFolder)){
+		console.log("Charity folder exists!");
+		if (!fs.existsSync(contributionFolder)) {
+			console.log("Contributions id folder does not exist!");
+			try {
+			    fs.mkdirSync(contributionFolder);
+				fs.writeFileSync(contributionFolder + `/${contributionId}_image.txt`, contributionImageUrl);
+				fs.writeFileSync(contributionFolder + `/${contributionId}_description.txt`, contributionDescription);
+		    } catch(err) {
+		    	console.log(err);
+		    	return false;
+		    }
+
+	    	return true;
+		
+		} else {
+			console.log("Contributions id folder exists!");
+			try {
+				fs.writeFileSync(contributionFolder + `/${contributionId}_image.txt`, contributionImageUrl);
+				fs.writeFileSync(contributionFolder + `/${contributionId}_description.txt`, contributionDescription);
+			} catch(err) {
+				console.log(err);
+				return false;
+			}
+
+			return true;
+		}
+
+	} else {
+		return false;
+	}
+}
+
+function approveCharityContribution(dir, charityId) {
+
 }
 
 function getAllCharities(dir) {
