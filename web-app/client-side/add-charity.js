@@ -28,7 +28,7 @@ $(document).ready(async function() {
 		}
 	});
 
-	function addCharity() {
+	async function addCharity() {
 		var charityFunds = $.trim($('#funds').val());
 		var representativeName = $.trim($('#representativeName').val());
 		var charityName = $.trim($('#name').val());
@@ -45,34 +45,6 @@ $(document).ready(async function() {
 		if (typeof web3 === 'undefined') {
 			return showError("Please install MetaMask to access the Ethereum Web3 API from your web browser.");
 		}
-
-		// contract.submitCharity(charityName, representativeName, web3.toWei(charityFunds), function(err, res) {
-		// 	if (err) {
-		// 		return showError("Smart contract call failed: " + err);
-		// 	}
-
-		// 	showInfo("Charity submitted successfully!");
-
-		// 	contract.getCharityIdByName(charityName, function(err, res) {
-		// 		if (err) {
-		// 			return showError("Error: " + err);
-		// 		}
-
-		// 		console.log(res);
-
-		// 		var charityId = res[0].c[0];
-
-		// 		$.ajax({
-		// 			url: 'http://localhost:8001/addCharity',
-		// 			type: 'GET',
-		// 			contentType: "application/json",
-		// 			data: {
-		// 			    description: description,
-		// 			    charityId: charityId
-		// 			}
-		// 		});
-		// 	});
-		// });
 
 		// TODO START
 		// contract.allEvents({fromBlock: 0}).get((e, res) => console.log(res))
@@ -93,40 +65,38 @@ $(document).ready(async function() {
 			var charityExists = res[1];
 
 			if (!charityExists) {
-				contract.submitCharity(charityName, representativeName, web3.toWei(charityFunds), async function(err1, res1) {
-					if (err1) {
-						return showError("Smart contract call failed: " + err1);
+
+				contract.getCharitiesCount(async function(err, res) {
+					if (err) {
+						return showError("Error: " + err);
 					}
 
-					await contract.getCharityIdByName(charityName, function(error, result) {
-						if (error) {
-							return showError("Error: " + error);
-						}
+					var newCharityId = res.c[0];
 
-						console.log(result);
-
-						var charityId = result[0].c[0];
-
-						$.ajax({
-							url: 'http://localhost:8001/addCharity',
-							type: 'GET',
-							contentType: "application/json",
-							data: {
-							    description: description,
-							    charityId: charityId
-							},
-							success: async function(data) {
-								console.log(data);
-								var jsonData = JSON.parse(data);
-								showInfo(jsonData.success);
+					$.ajax({
+						url: 'http://localhost:8001/addCharity',
+						type: 'GET',
+						contentType: "application/json",
+						data: {
+						    description: description,
+						    charityId: newCharityId
+						},
+						success: async function(data) {
+							contract.submitCharity(charityName, representativeName, web3.toWei(charityFunds), async function(err, res) {
 								$("#loadingBox").hide();
-							},
-							error: async function(data) {
-								console.log(data);
-								showError(data.error);
-								$("#loadingBox").hide();	
-							}
-						});
+
+								if (err) {
+									return showError("Smart contract call failed: " + err);
+								}
+
+								showInfo("Charity added successfully");
+							});
+						},
+						error: async function(data) {
+							console.log(data);
+							showError(data.error);
+							$("#loadingBox").hide();	
+						}
 					});
 				});
 			} else {

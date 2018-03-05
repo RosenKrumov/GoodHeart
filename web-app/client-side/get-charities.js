@@ -53,15 +53,28 @@ $(document).ready(async function() {
                         }
 
                         var charityName = charityResult[2];
-                        var id = charityResult[5];
+                        var id = charityResult[5].c[0];
 
+                        $.ajax({
+                            url: 'http://localhost:8001/getCharity',
+                            type: 'GET',
+                            contentType: "application/json",
+                            data: {
+                                charityId: id
+                            },
+                            error: function(data) {
+                                $("#loadingBox").hide();    
+                            }
+                        }).then(async function(res) {
+                            if (res.description != "") {
+                                var htmlRender = `<div>
+                                                    <a style="font-size: 1.5em;" href=/charities/${id}>${charityName}</a>
+                                                    <hr>
+                                                 </div>`
 
-                        var htmlRender = `<div>
-                                                <a style="font-size: 1.5em;" href=/charities/${id}>${charityName}</a>
-                                                <hr>
-                                          </div>`
-
-                        $("#charitiesContainer").append(htmlRender);
+                                $("#charitiesContainer").append(htmlRender);
+                            }
+                        });
                     });
                 }
             });

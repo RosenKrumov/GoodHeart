@@ -8,7 +8,7 @@ var html_sanitizer = require('html-css-sanitizer').sanitize;
 const { join } = require('path')
 
 var charities_folder = "./web-app/resources/charities";
-var charities_images_paths = "/web-app/views";
+var charities_images_paths = "/web-app/images";
 
 var node_hostname = "localhost";
 var http_port = "8001";
@@ -19,7 +19,7 @@ var initHttpServer = () => {
 
 	//app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: true }));
-	app.use('/web-app/views', express.static('./web-app/resources/charities'));
+	app.use('/web-app/images', express.static('./web-app/resources/charities'));
 	app.use('/web-app', express.static('./web-app'));
 
 	app.get('/', function(req, res) {
@@ -101,7 +101,13 @@ function addCharity(dir, charityDescription, charityId) {
 
 	    return true;
 	} else {
-		return false;
+	    try {
+	    	fs.writeFileSync(directoryToCreate + "/" + fileToCreate, charityDescription);
+	    } catch(err) {
+	    	return false;
+	    }
+
+	    return true;
 	}
 }
 
@@ -139,20 +145,28 @@ function getAllCharities(dir) {
 
 function getCharity(dir, charityId) {
 	var charityDir = `${dir}/${charityId}`;
-	var charityFiles = fs.readdirSync(charityDir);
-	var charityJson = {};
 
-	charityFiles.map(charityFile => {
-        if (charityFile.endsWith(".txt")) {
-            var charityFilePath = charityDir+ "/" + charityFile;
-            var content = fs.readFileSync(charityFilePath, 'utf-8');
-            content = html_sanitizer(content);
-            charityJson['description'] = content;
-        } else if (charityFile.indexOf("picture") > -1) {
-            var charityPicturePath = charities_images_paths + "/" + charityId + "/" + charityFile
-            charityJson['picture'] = charityPicturePath;
-        }
-	});
+	try {
+		var charityFiles = fs.readdirSync(charityDir);
+		var charityJson = {};
+
+		charityFiles.map(charityFile => {
+	        if (charityFile.endsWith(".txt")) {
+	            var charityFilePath = charityDir+ "/" + charityFile;
+	            var content = fs.readFileSync(charityFilePath, 'utf-8');
+	            content = html_sanitizer(content);
+	            charityJson['description'] = content;
+	        } else if (charityFile.indexOf("picture") > -1) {
+	            var charityPicturePath = charities_images_paths + "/" + charityId + "/" + charityFile
+	            charityJson['picture'] = charityPicturePath;
+	        }
+		});
+	} catch (err) {
+		return {
+			'description': "",
+			'picture': ""
+		}
+	}
 
 	return charityJson;
 }
