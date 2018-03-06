@@ -3,6 +3,8 @@ var entityMap = {
     '>': '&gt;',
 };
 
+var bitlyAccessToken = 'be00a7cb806f2158365b0cf6159ed56c475c1b58';
+
 $(document).ready(async function() {
     var charityId = $('#charityId').text();
     var validStatus = $('#isFound').text();
@@ -36,6 +38,22 @@ $(document).ready(async function() {
     function checkUrlIsValidImage(url) {
         return(url.match(/\.(jpeg|jpg|gif|png)$/) != null);
     }
+
+    function getShortUrl(url)
+    {
+       var accessToken = '___YOUR_ACCESS_TOKEN___';
+       var url = 'https://api-ssl.bitly.com/v3/shorten?access_token=' + bitlyAccessToken + '&longUrl=' + encodeURIComponent(url);
+
+        $.getJSON(
+            url,
+            {},
+            function(response)
+            {
+                console.log(response.data.url);
+            }
+        );
+    }
+
 
     $(document).on("change", "#contributionImage", function () {
         var reader = new FileReader();
@@ -78,7 +96,7 @@ $(document).ready(async function() {
 
             var charity = res;
             var contract = web3.eth.contract(contractABI).at(contractAddress);
-            await contract.getCharity(charityId, function(err, charityResult) {
+            await contract.getCharity(charityId, async function(err, charityResult) {
                 if (err) {
                     return showError("Smart contract call failed: " + err);
                 }
@@ -103,23 +121,23 @@ $(document).ready(async function() {
 
                 if (isFunded) {
                     if (web3.eth.coinbase == address && currentFunds > 0) {
-                        htmlRender += `     <hr>
-                                            <div class="form-group">
-                                                <label for="contributionDescription">Contribution description: </label>
-                                                <textarea class="form-control" rows="5", id="contributionDescription", name="contributionDescription", style="resize: none"></textarea>
-                                                <label for="imageUrl">Please enter image URL as evidence: </label>
-                                                <input class="form-control" type="url" id="imageUrl" name="imageUrl"></input><br>
-                                                <br><br><input class="btn btn-default" type="button" id="addContributionButton" value="Add contribution"></input>
-                                            </div>
-                                            <hr>
-                                      </div>`;
+                        htmlRender += ` <hr>
+                                        <div class="form-group">
+                                            <label for="contributionDescription">Contribution description: </label>
+                                            <textarea class="form-control" rows="5", id="contributionDescription", name="contributionDescription", style="resize: none"></textarea>
+                                            <label for="imageUrl">Please enter image URL as evidence: </label>
+                                            <input class="form-control" type="url" id="imageUrl" name="imageUrl"></input><br>
+                                            <br><br><input class="btn btn-default" type="button" id="addContributionButton" value="Add contribution"></input>
+                                        </div>
+                                        <hr>
+                                  </div>`;
                     } else if (currentFunds == 0) {
-                        htmlRender += `     <h3>Charity is completed!</h3>
-                                            <hr>
-                                      </div>`;
+                        htmlRender += ` <h3>Charity is completed!</h3>
+                                        <hr>
+                                  </div>`;
                     } else if (web3.eth.coinbase != address) {
-                        htmlRender += `     <hr>
-                                      </div>`;
+                        htmlRender += ` <hr>
+                                  </div>`;
                     }
                 } else {
                     htmlRender += `     <p class="text-justify">Current ether collected: ${currentFunds}</p>
@@ -131,8 +149,83 @@ $(document).ready(async function() {
                                   </div>`;
                 }
 
-
                 $("#charityContainer").append(htmlRender);
+
+                if (isFunded) {
+
+                    var id = parseInt(charityId, 10);
+                    contract.getCharityContributionsCount(charityId, async function(err, result) {
+                        if (err) {
+                            return showError("Smart contract call failed: " + err);
+                        }
+
+                        var contributionsCount = result;
+
+                        console.log("Contributions: " + contributionsCount);
+
+                        if(contributionsCount > 0) {
+                            console.log("TEST");
+
+                            $.ajax({
+                                url: 'http://localhost:8001/getCharityContributions',
+                                type: 'GET',
+                                contentType: "application/json",
+                                data: {
+                                    charityId: id
+                                },
+                                error: function(data) {
+                                    console.log(data);
+                                    $("#loadingBox").hide();    
+                                },
+                                success: async function(contributions) {
+
+                                    var contributionHtmlRender = `<div style="font-size: 1.3em;">
+                                                        <h3>Contributions:</h3>
+                                                        <hr>`;
+
+                                    var notApprovedContrIds = [];
+
+                                    for (var i = 0; i < contributionsCount; i++) {
+                                        await contract.getCharityContributionData(charityId, i, function(err, result) {
+                                            if (err) {
+                                                return showError("Smart contract call failed: " + err);
+                                            }
+
+                                            var contributionId = result[0];
+                                            var approved = result[1];
+                                            var contributionDescription = contributions[contributionId].description;
+                                            var contributionImage = contributions[contributionId].image;
+
+                                            if (contributionDescription != '') {
+                                                contributionHtmlRender += ` <p class="text-justify">Description: ${contributionDescription}</p><br>
+                                                                            <img src="${contributionImage}" width="500" height="300" /><br><br>`;
+                                                if (!approved && web3.eth.coinbase == contractOwnerAddress) {
+                                                    notApprovedContrIds.push(contributionId);
+                                                }
+
+                                                contributionHtmlRender += `<hr>`;
+                                            }
+
+                                            if (contributionId == contributionsCount - 1) {
+                                                contributionHtmlRender += ` <select id="selectContribution">`;
+
+                                                notApprovedContrIds.map(id => {
+                                                    contributionHtmlRender += `<option>${id}</option>`
+                                                })
+
+                                                contributionHtmlRender += ` </select>`;
+                                                contributionHtmlRender += " <input class='btn btn-default' type='button' id='approveContributionButton' value='Approve'></input>";
+                                                contributionHtmlRender += `</div>`;
+                                                $("#charityContainer").append(contributionHtmlRender);
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        }
+
+                    });
+                }
             });
         });
     }
@@ -189,37 +282,66 @@ $(document).ready(async function() {
         contract.getCharityContributionsCount(charityId, function(err, res) {
             if(err) {
                 return showError("Smart contract call failed: " + err);
-            } else {
-                console.log(res);
-                var contributionId = res.c[0];
-                $.ajax({
-                    url: 'http://localhost:8001/addCharityContribution',
-                    type: 'GET',
-                    data: {
-                        description: description,
-                        charityId: charityId,
-                        imageUrl: imageUrl,
-                        contributionId: contributionId
-                    },
-                    success: async function(data) {
-                        console.log(data);
-                        contract.addContributionToCharity(charityId, async function(err, res) {
-                            $("#loadingBox").hide();
-
-                            if (err) {
-                                return showError("Smart contract call failed: " + err);
-                            }
-
-                            showInfo("Contribution added successfully");
-                        });
-                    },
-                    error: async function(data) {
-                        console.log(data);
-                        showError(data.error);
-                        $("#loadingBox").hide();    
-                    }
-                });
             }
+        
+            console.log(res);
+            var contributionId = res.c[0];
+
+            $.ajax({
+                url: 'http://localhost:8001/addCharityContribution',
+                type: 'GET',
+                data: {
+                    description: description,
+                    charityId: charityId,
+                    imageUrl: imageUrl,
+                    contributionId: contributionId
+                },
+                success: async function(data) {
+                    console.log(data);
+                    contract.addContributionToCharity(charityId, async function(err, res) {
+                        $("#loadingBox").hide();
+
+                        if (err) {
+                            return showError("Smart contract call failed: " + err);
+                        }
+
+                        showInfo("Contribution added successfully");
+                    });
+                },
+                error: async function(data) {
+                    console.log(data);
+                    showError(data.error);
+                    $("#loadingBox").hide();    
+                }
+            });
+        });
+    });
+
+    $(document).on('click', '#approveContributionButton', function(e) {
+        if (typeof web3 === 'undefined') {
+            return showError("Please install MetaMask to access the Ethereum Web3 API from your web browser.");
+        }
+
+        if (web3.eth.coinbase != contractOwnerAddress) {
+            return showError("You are not the owner of the contract.");
+        }
+
+        var contributionId = escapeHtml($.trim($("#selectContribution").val()));
+
+        if (contributionId != parseInt(contributionId, 10)) {
+            return showError("Invalid ID provided.");
+        }
+
+        contributionId = parseInt(contributionId, 10);
+
+        var contract = web3.eth.contract(contractABI).at(contractAddress);
+        contract.approveContributionToCharity(charityId, contributionId, function(err, res) {
+            if(err) {
+                return showError("Smart contract call failed: " + err);
+            } 
+        
+            console.log(res);
+            showInfo("Contribution approved successfully!");
         });
     });
 });

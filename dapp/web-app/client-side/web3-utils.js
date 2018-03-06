@@ -1,5 +1,51 @@
-var contractAddress = "0x6bfe30be2b0f5d0de64203b861b74622a454e71b";
+var contractAddress = "0x5a0f3da9917357dcc4d7376a99d3b35bc44eac6f";
+var contractOwnerAddress = "0x10b91de52c39d88b0bd0495e8ec185944d98bec5";
 var contractABI = [
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "_charityId",
+				"type": "uint256"
+			},
+			{
+				"name": "_contributionId",
+				"type": "uint256"
+			}
+		],
+		"name": "getCharityContributionData",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_charityId",
+				"type": "uint256"
+			},
+			{
+				"name": "_contributionId",
+				"type": "uint256"
+			}
+		],
+		"name": "approveContributionToCharity",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
 	{
 		"constant": true,
 		"inputs": [],
@@ -46,20 +92,6 @@ var contractABI = [
 			}
 		],
 		"name": "addContributionToCharity",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "_charityId",
-				"type": "uint256"
-			}
-		],
-		"name": "approveContributionToCharity",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -146,60 +178,6 @@ var contractABI = [
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "currentFundsForCharity",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "charities",
-		"outputs": [
-			{
-				"name": "representative",
-				"type": "address"
-			},
-			{
-				"name": "representativeName",
-				"type": "string"
-			},
-			{
-				"name": "charityName",
-				"type": "string"
-			},
-			{
-				"name": "totalFundsRequest",
-				"type": "uint256"
-			},
-			{
-				"name": "isFunded",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{

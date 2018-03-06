@@ -47,3 +47,7 @@ section h1 {
 #errorBox {
 	background: #F50;
 }
+
+p {
+	word-wrap: break-word;
+}

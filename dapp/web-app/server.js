@@ -39,7 +39,13 @@ var initHttpServer = () => {
 		var charityId = req.query.charityId.trim();
 		var charity = getCharity(charities_folder, charityId);
 		res.send(charity);
-	})
+	});
+
+	app.get('/getCharityContributions', function(req, res) {
+		var charityId = req.query.charityId.trim();
+		var contributions = getCharityContributions(charities_folder, charityId);
+		res.send(contributions);
+	});
 
 	app.get('/charities/add', function(req, res) {
 		res.render('../web-app/views/addCharity', {title: 'GoodHeart', message: 'GoodHeart Charity Organization'});
@@ -111,7 +117,7 @@ function addCharity(dir, charityDescription, charityId) {
 	    try {
 		    fs.mkdirSync(directoryToCreate);
 		    fs.mkdirSync(directoryToCreate + "/approvedContributions");
-		    fs.mkdirSync(directoryToCreate + "/notApprovedContributions");
+		    fs.mkdirSync(directoryToCreate + "/contributions");
 	    	fs.writeFileSync(directoryToCreate + "/" + fileToCreate, charityDescription);
 	    } catch(err) {
 	    	return false;
@@ -131,7 +137,7 @@ function addCharity(dir, charityDescription, charityId) {
 
 function addCharityContribution(charityId, contributionId, contributionDescription, contributionImageUrl) {
 	var charityFolder = `${charities_folder}/${charityId}`;
-	var contributionFolder = `${charityFolder}/notApprovedContributions/${contributionId}`;
+	var contributionFolder = `${charityFolder}/contributions/${contributionId}`;
 
 	if (fs.existsSync(charityFolder)){
 		console.log("Charity folder exists!");
@@ -164,10 +170,6 @@ function addCharityContribution(charityId, contributionId, contributionDescripti
 	} else {
 		return false;
 	}
-}
-
-function approveCharityContribution(dir, charityId) {
-
 }
 
 function getAllCharities(dir) {
@@ -228,6 +230,30 @@ function getCharity(dir, charityId) {
 	}
 
 	return charityJson;
+}
+
+function getCharityContributions(dir, charityId) {
+	var allContributions = {};
+	var contributionsFolder = `${dir}/${charityId}/contributions`;
+
+	var contributionsFolders = fs.readdirSync(contributionsFolder);
+
+	contributionsFolders.map(contribution => {
+		allContributions[contribution] = {};
+		var contributionFiles = fs.readdirSync(contributionsFolder + "/" + contribution);
+		contributionFiles.map(file => {
+			var content = fs.readFileSync(contributionsFolder + "/" + contribution + "/" + file);
+			content = html_sanitizer(content);
+
+			if (file.endsWith("_image.txt")) {
+				allContributions[contribution]['image'] = content; 
+			} else if (file.endsWith("_description.txt")) {
+				allContributions[contribution]['description'] = content;
+			}
+		});
+	});
+
+	return allContributions;
 }
 
 initHttpServer();
