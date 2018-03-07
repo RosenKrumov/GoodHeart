@@ -1,5 +1,5 @@
-var contractAddress = "0x5a0f3da9917357dcc4d7376a99d3b35bc44eac6f";
-var contractOwnerAddress = "0x10b91de52c39d88b0bd0495e8ec185944d98bec5";
+var contractAddress = "0xaea00597e7129d55091e0716143bfe856b66575d";
+var contractOwnerAddress = "0x94b371aa8a1f31ad13551d4f8ca1b01c08ee274f";
 var contractABI = [
 	{
 		"constant": true,

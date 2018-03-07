@@ -95,9 +95,18 @@ var initHttpServer = () => {
 	app.get('/charities/:id', function(req, res) {
 		var id = req.params.id;
 		if (id == parseInt(id, 10)) {
-		    res.render('../web-app/views/charity', {title: 'GoodHeart', message: 'GoodHeart Charity Organization', charityId: id, status: 'OK'});
+		    res.render('../web-app/views/charity', {
+		    	title: 'GoodHeart', 
+		    	message: 'GoodHeart Charity Organization', 
+		    	charityId: id, status: 'OK'
+		    });
 		} else {
-		    res.render('../web-app/views/charity', {title: 'GoodHeart', message: 'GoodHeart Charity Organization', charityId: id, status: 'Invalid'});
+		    res.render('../web-app/views/charity', {
+		    	title: 'GoodHeart', 
+		    	message: 'GoodHeart Charity Organization', 
+		    	charityId: id, 
+		    	status: 'Invalid'
+		    });
 		}
 
 	});

@@ -3,8 +3,6 @@ var entityMap = {
     '>': '&gt;',
 };
 
-var bitlyAccessToken = 'be00a7cb806f2158365b0cf6159ed56c475c1b58';
-
 $(document).ready(async function() {
     var charityId = $('#charityId').text();
     var validStatus = $('#isFound').text();
@@ -38,22 +36,6 @@ $(document).ready(async function() {
     function checkUrlIsValidImage(url) {
         return(url.match(/\.(jpeg|jpg|gif|png)$/) != null);
     }
-
-    function getShortUrl(url)
-    {
-       var accessToken = '___YOUR_ACCESS_TOKEN___';
-       var url = 'https://api-ssl.bitly.com/v3/shorten?access_token=' + bitlyAccessToken + '&longUrl=' + encodeURIComponent(url);
-
-        $.getJSON(
-            url,
-            {},
-            function(response)
-            {
-                console.log(response.data.url);
-            }
-        );
-    }
-
 
     $(document).on("change", "#contributionImage", function () {
         var reader = new FileReader();
@@ -124,10 +106,12 @@ $(document).ready(async function() {
                         htmlRender += ` <hr>
                                         <div class="form-group">
                                             <label for="contributionDescription">Contribution description: </label>
-                                            <textarea class="form-control" rows="5", id="contributionDescription", name="contributionDescription", style="resize: none"></textarea>
+                                            <textarea class="form-control" rows="5", id="contributionDescription", 
+                                            name="contributionDescription", style="resize: none"></textarea>
                                             <label for="imageUrl">Please enter image URL as evidence: </label>
                                             <input class="form-control" type="url" id="imageUrl" name="imageUrl"></input><br>
-                                            <br><br><input class="btn btn-default" type="button" id="addContributionButton" value="Add contribution"></input>
+                                            <br><br><input class="btn btn-default" type="button" id="addContributionButton" 
+                                                                value="Add contribution"></input>
                                         </div>
                                         <hr>
                                   </div>`;
@@ -153,80 +137,91 @@ $(document).ready(async function() {
 
                 if (isFunded) {
 
-                    var id = parseInt(charityId, 10);
-                    contract.getCharityContributionsCount(charityId, async function(err, result) {
-                        if (err) {
-                            return showError("Smart contract call failed: " + err);
-                        }
+                    displayContributions(contract, charityId);
+                }
+            });
+        });
+    }
 
-                        var contributionsCount = result;
+    function displayContributions(contract, charityId) {
+        var id = parseInt(charityId, 10);
+        contract.getCharityContributionsCount(id, async function(err, result) {
+            if (err) {
+                return showError("Smart contract call failed: " + err);
+            }
 
-                        console.log("Contributions: " + contributionsCount);
+            var contributionsCount = result;
 
-                        if(contributionsCount > 0) {
-                            console.log("TEST");
+            console.log("Contributions: " + contributionsCount);
 
-                            $.ajax({
-                                url: 'http://localhost:8001/getCharityContributions',
-                                type: 'GET',
-                                contentType: "application/json",
-                                data: {
-                                    charityId: id
-                                },
-                                error: function(data) {
-                                    console.log(data);
-                                    $("#loadingBox").hide();    
-                                },
-                                success: async function(contributions) {
+            if(contributionsCount > 0) {
+                console.log("TEST");
 
-                                    var contributionHtmlRender = `<div style="font-size: 1.3em;">
-                                                        <h3>Contributions:</h3>
-                                                        <hr>`;
+                $.ajax({
+                    url: 'http://localhost:8001/getCharityContributions',
+                    type: 'GET',
+                    contentType: "application/json",
+                    data: {
+                        charityId: id
+                    },
+                    error: function(data) {
+                        console.log(data);
+                        $("#loadingBox").hide();    
+                    },
+                    success: async function(contributions) {
 
-                                    var notApprovedContrIds = [];
+                        var contributionHtmlRender = `<div style="font-size: 1.3em;">
+                                            <h3>Contributions:</h3>
+                                            <hr>`;
 
-                                    for (var i = 0; i < contributionsCount; i++) {
-                                        await contract.getCharityContributionData(charityId, i, function(err, result) {
-                                            if (err) {
-                                                return showError("Smart contract call failed: " + err);
-                                            }
+                        var notApprovedContrIds = [];
 
-                                            var contributionId = result[0];
-                                            var approved = result[1];
-                                            var contributionDescription = contributions[contributionId].description;
-                                            var contributionImage = contributions[contributionId].image;
+                        for (var i = 0; i < contributionsCount; i++) {
+                            await contract.getCharityContributionData(charityId, i, function(err, result) {
+                                if (err) {
+                                    return showError("Smart contract call failed: " + err);
+                                }
 
-                                            if (contributionDescription != '') {
-                                                contributionHtmlRender += ` <p class="text-justify">Description: ${contributionDescription}</p><br>
-                                                                            <img src="${contributionImage}" width="500" height="300" /><br><br>`;
-                                                if (!approved && web3.eth.coinbase == contractOwnerAddress) {
-                                                    notApprovedContrIds.push(contributionId);
-                                                }
+                                var contributionId = result[0];
+                                var approved = result[1];
+                                var contributionDescription = contributions[contributionId].description;
+                                var contributionImage = contributions[contributionId].image;
 
-                                                contributionHtmlRender += `<hr>`;
-                                            }
-
-                                            if (contributionId == contributionsCount - 1) {
-                                                contributionHtmlRender += ` <select id="selectContribution">`;
-
-                                                notApprovedContrIds.map(id => {
-                                                    contributionHtmlRender += `<option>${id}</option>`
-                                                })
-
-                                                contributionHtmlRender += ` </select>`;
-                                                contributionHtmlRender += " <input class='btn btn-default' type='button' id='approveContributionButton' value='Approve'></input>";
-                                                contributionHtmlRender += `</div>`;
-                                                $("#charityContainer").append(contributionHtmlRender);
-                                            }
-                                        });
+                                if (contributionDescription != '') {
+                                    contributionHtmlRender += ` <p class="text-justify">
+                                                                    Description: ${contributionDescription}
+                                                                </p>
+                                                                <br>
+                                                                <img src="${contributionImage}" width="500" height="300" /><br><br>`;
+                                    if (!approved && web3.eth.coinbase == contractOwnerAddress) {
+                                        notApprovedContrIds.push(contributionId);
                                     }
+
+                                    contributionHtmlRender += `<hr>`;
+                                }
+
+                                if (contributionId == contributionsCount - 1) {
+                                    if (web3.eth.coinbase == contractOwnerAddress) {
+                                        contributionHtmlRender += ` <select id="selectContribution">`;
+
+                                        notApprovedContrIds.map(id => {
+                                            contributionHtmlRender += `<option>${id}</option>`
+                                        })
+
+                                        contributionHtmlRender += ` </select>`;
+                                        contributionHtmlRender += ` <input class='btn btn-default' type='button' id='approveContributionButton'
+                                                                                        value='Approve'></input>`;
+                                    }
+
+                                    contributionHtmlRender += `</div>`;
+                                    $("#charityContainer").append(contributionHtmlRender);
                                 }
                             });
                         }
+                    }
+                });
+            }
 
-                    });
-                }
-            });
         });
     }
 

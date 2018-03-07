@@ -9,7 +9,7 @@ var entityMap = {
   '=': '&#x3D;'
 };
 
-$(document).ready(async function() {
+$(document).ready(function() {
 	$('main > section').hide();
 
 	$('#addCharityButton').click(addCharity);
@@ -46,7 +46,7 @@ $(document).ready(async function() {
 		}
 	});
 
-	async function addCharity() {
+	function addCharity() {
 		var charityFunds = $.trim($('#funds').val());
 		var representativeName = escapeHtml($.trim($('#representativeName').val()));
 		var charityName = escapeHtml($.trim($('#name').val()));
@@ -67,18 +67,7 @@ $(document).ready(async function() {
 			return showError("Please install MetaMask to access the Ethereum Web3 API from your web browser.");
 		}
 
-		// TODO START
-		// contract.allEvents({fromBlock: 0}).get((e, res) => console.log(res))
-
-		// contract.CharityCreated({}, {fromBlock: 0}).watch((error, result) => {
-		//   if (error)
-		//     console.log('Error in CharityCreated event handler: ' + error);
-		//   else
-		//     console.log('CharityCreated: ' + JSON.stringify(result.args));
-		// });
-		// TODO END
-
-		contract.getCharityIdByName(charityName, async function(err, res) {
+		contract.getCharityIdByName(charityName, function(err, res) {
 			if (err) {
 				return showError("Error: " + err);
 			}
@@ -87,7 +76,7 @@ $(document).ready(async function() {
 
 			if (!charityExists) {
 
-				contract.getCharitiesCount(async function(err, res) {
+				contract.getCharitiesCount(function(err, res) {
 					if (err) {
 						return showError("Error: " + err);
 					}
@@ -102,8 +91,9 @@ $(document).ready(async function() {
 						    description: description,
 						    charityId: newCharityId
 						},
-						success: async function(data) {
-							contract.submitCharity(charityName, representativeName, web3.toWei(charityFunds), async function(err, res) {
+						success: function(data) {
+							contract.submitCharity(charityName, representativeName, 
+								web3.toWei(charityFunds), function(err, res) {
 								$("#loadingBox").hide();
 
 								if (err) {
@@ -113,7 +103,7 @@ $(document).ready(async function() {
 								showInfo("Charity added successfully");
 							});
 						},
-						error: async function(data) {
+						error: function(data) {
 							console.log(data);
 							showError(data.error);
 							$("#loadingBox").hide();	
