@@ -153,7 +153,8 @@ contract GoodHeart {
         Charity storage charity = charities[_index];
         uint totalFundsRequestInEther = charity.totalFundsRequest / 1 ether;
         uint currentCollectedFunds = currentFundsForCharity[_index] / 1 ether;
-        return (charity.representative, charity.representativeName, charity.charityName, totalFundsRequestInEther, charity.isFunded, _index, currentCollectedFunds);
+        return (charity.representative, charity.representativeName, charity.charityName, totalFundsRequestInEther, 
+                charity.isFunded, _index, currentCollectedFunds);
     }
 
     function getCharityIdByName(string _name) public view returns(uint, bool) {
