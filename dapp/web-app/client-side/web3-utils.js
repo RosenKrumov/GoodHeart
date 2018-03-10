@@ -1,5 +1,6 @@
-var contractAddress = "0xaea00597e7129d55091e0716143bfe856b66575d";
-var contractOwnerAddress = "0x94b371aa8a1f31ad13551d4f8ca1b01c08ee274f";
+var contractAddress = "0x9B46a4a82e04cEE9463b3c16dCCE14119f73D95f";
+// var contractOwnerAddress = "0x627306090abab3a6e1400e9345bc60c78a8bef57"; TRUFFLE NET
+var contractOwnerAddress = "0xf32327d536462eaef2cebf8841668033a2a60989" //ROPSTEN NET
 var contractABI = [
 	{
 		"constant": true,
@@ -138,6 +139,44 @@ var contractABI = [
 			{
 				"name": "",
 				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "_charityId",
+				"type": "uint256"
+			}
+		],
+		"name": "getCharityApprovedContributions",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "_charityId",
+				"type": "uint256"
+			}
+		],
+		"name": "getCharityNotApprovedContributions",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"payable": false,
@@ -299,4 +338,4 @@ var contractABI = [
 		"name": "CharityFundsCollected",
 		"type": "event"
 	}
-];
+]

@@ -57,7 +57,7 @@ contract GoodHeart {
     }
     
     modifier hasMoneyforCharity(uint _id) {
-        require(this.balance >= currentFundsForCharity[_id] && currentFundsForCharity[_id] > 0);
+        require(currentFundsForCharity[_id] > 0);
         _;
     }
     
@@ -79,7 +79,12 @@ contract GoodHeart {
     }
 
     modifier hasContributionsToApprove(uint _charityId) {
-        require(notApprovedContributionsForCharity[_charityId] > 0);
+        require(approvedContributionsForCharity[_charityId] < contributionsForCharity[_charityId].length);
+        _;
+    }
+    
+    modifier contributionIsNotApprovedYet(uint _charityId, uint _contributionId) {
+        require(contributionsForCharity[_charityId][_contributionId].approved == false);
         _;
     }
 
@@ -95,7 +100,7 @@ contract GoodHeart {
         approvedContributionsForCharity[id] = 0;
         notApprovedContributionsForCharity[id] = 0;
 
-        CharityCreated(id);
+        emit CharityCreated(id);
     }
 
     function giveMoneyForCharity(uint _charityId) public payable 
@@ -117,10 +122,10 @@ contract GoodHeart {
             currentFundsForCharity[_charityId] += msg.value;
         }
 
-        CharityGranted(_charityId, msg.value);
+        emit CharityGranted(_charityId, msg.value);
 
         if (charity.isFunded) {
-            CharityFundsCollected(_charityId);
+            emit CharityFundsCollected(_charityId);
             _grantMoneyToRepresenter(charities[_charityId].representative, _charityId);
         }
     }   
@@ -131,29 +136,30 @@ contract GoodHeart {
         require(notApprovedContributionsForCharity[_charityId] + 1 > notApprovedContributionsForCharity[_charityId]);
         notApprovedContributionsForCharity[_charityId]++;
         contributionsForCharity[_charityId].push(Contribution(false));
-        ContributionForApprovalAdded(_charityId);
+        emit ContributionForApprovalAdded(_charityId);
     }
 
     function approveContributionToCharity(uint _charityId, uint _contributionId) public 
              onlyOwner
              checkIfCanTakeContributions(_charityId) 
-             hasContributionsToApprove(_charityId) {
+             hasContributionsToApprove(_charityId) 
+             contributionIsNotApprovedYet(_charityId, _contributionId) {
         require(approvedContributionsForCharity[_charityId] + 1 > approvedContributionsForCharity[_charityId]);
         require(notApprovedContributionsForCharity[_charityId] - 1 < notApprovedContributionsForCharity[_charityId]);
 
         approvedContributionsForCharity[_charityId]++;
-        notApprovedContributionsForCharity[_charityId]--;
+        //notApprovedContributionsForCharity[_charityId]--;
         contributionsForCharity[_charityId][_contributionId].approved = true;
-        ContributionApproved(_charityId);
+        emit ContributionApproved(_charityId);
         _grantMoneyToRepresenter(charities[_charityId].representative, _charityId);
     }
 
     function getCharity(uint _index) public view returns(address, string, string, uint, bool, uint, uint) {
         require(charities.length > _index);
         Charity storage charity = charities[_index];
-        uint totalFundsRequestInEther = charity.totalFundsRequest / 1 ether;
-        uint currentCollectedFunds = currentFundsForCharity[_index] / 1 ether;
-        return (charity.representative, charity.representativeName, charity.charityName, totalFundsRequestInEther, 
+        uint totalFundsRequest = charity.totalFundsRequest;
+        uint currentCollectedFunds = currentFundsForCharity[_index];
+        return (charity.representative, charity.representativeName, charity.charityName, totalFundsRequest, 
                 charity.isFunded, _index, currentCollectedFunds);
     }
 
@@ -177,6 +183,14 @@ contract GoodHeart {
 
     function getCharityContributionsCount(uint _charityId) public view returns(uint) {
         return contributionsForCharity[_charityId].length;
+    }
+    
+    function getCharityNotApprovedContributions(uint _charityId) public view returns(uint) {
+        return notApprovedContributionsForCharity[_charityId];
+    }
+
+    function getCharityApprovedContributions(uint _charityId) public view returns(uint) {
+        return approvedContributionsForCharity[_charityId];
     }
 
     function getCharityContributionData(uint _charityId, uint _contributionId) public view returns(uint, bool) {
@@ -205,7 +219,6 @@ contract GoodHeart {
             fundsToTransfer = currentFundsForCharity[_charityId];
             currentFundsForCharity[_charityId] = 0;
         } else {
-            require(currentFundsForCharity[_charityId] - fundsToTransfer < currentFundsForCharity[_charityId]);
             currentFundsForCharity[_charityId] -= fundsToTransfer;
         }
 

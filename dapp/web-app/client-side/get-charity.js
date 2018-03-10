@@ -86,11 +86,11 @@ $(document).ready(async function() {
                 var address = charityResult[0];
                 var representativeName = charityResult[1];
                 var charityName = charityResult[2];
-                var totalFundsRequest = charityResult[3];
+                var totalFundsRequest = web3.fromWei(charityResult[3]);
                 var isFunded = charityResult[4];
                 var isFundedStr = isFunded ? "Yes" : "Not funded"; 
                 var id = charityResult[5];
-                var currentFunds = charityResult[6].toString();
+                var currentFunds = web3.fromWei(charityResult[6]);
                 var description = charity.description;
                 var image = charity.image;
 
@@ -137,13 +137,13 @@ $(document).ready(async function() {
 
                 if (isFunded) {
 
-                    displayContributions(contract, charityId);
+                    displayContributions(contract, charityId, isFunded, currentFunds);
                 }
             });
         });
     }
 
-    function displayContributions(contract, charityId) {
+    function displayContributions(contract, charityId, isFunded, currentFunds) {
         var id = parseInt(charityId, 10);
         contract.getCharityContributionsCount(id, async function(err, result) {
             if (err) {
@@ -191,6 +191,9 @@ $(document).ready(async function() {
                                     contributionHtmlRender += ` <p class="text-justify">
                                                                     Description: ${contributionDescription}
                                                                 </p>
+                                                                <p class="text-justify">
+                                                                    Id: ${contributionId}
+                                                                </p>
                                                                 <br>
                                                                 <img src="${contributionImage}" width="500" height="300" /><br><br>`;
                                     if (!approved && web3.eth.coinbase == contractOwnerAddress) {
@@ -201,16 +204,20 @@ $(document).ready(async function() {
                                 }
 
                                 if (contributionId == contributionsCount - 1) {
-                                    if (web3.eth.coinbase == contractOwnerAddress) {
-                                        contributionHtmlRender += ` <select id="selectContribution">`;
+                                    if (web3.eth.coinbase == contractOwnerAddress && isFunded && currentFunds != 0) {
+                                        if (notApprovedContrIds.length == 0) {
+                                            contributionHtmlRender += `<p class="text-center">You currently do not have contributions for approving</p>`
+                                        } else {
+                                            contributionHtmlRender += ` <select id="selectContribution">`;
 
-                                        notApprovedContrIds.map(id => {
-                                            contributionHtmlRender += `<option>${id}</option>`
-                                        })
+                                            notApprovedContrIds.map(id => {
+                                                contributionHtmlRender += `<option>${id}</option>`
+                                            })
 
-                                        contributionHtmlRender += ` </select>`;
-                                        contributionHtmlRender += ` <input class='btn btn-default' type='button' id='approveContributionButton'
-                                                                                        value='Approve'></input>`;
+                                            contributionHtmlRender += ` </select>`;
+                                            contributionHtmlRender += ` <input class='btn btn-default' type='button' id='approveContributionButton'
+                                                                                            value='Approve'></input>`;
+                                        }
                                     }
 
                                     contributionHtmlRender += `</div>`;

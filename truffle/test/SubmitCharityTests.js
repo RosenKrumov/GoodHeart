@@ -1,26 +1,11 @@
 const GoodHeart = artifacts.require("./GoodHeart.sol");
 const expectThrow = require("./util.js").expectThrow;
-const bigInt = require("big-integer");
-
 
 contract('GoodHeart', async function(accounts) {
 	const _owner = accounts[0];
 	const _notOwner = accounts[1];
 	
 	let goodHeartInstance;
-
-	describe("creating GoodHeart", async () => {
-		beforeEach(async function() {
-			goodHeartInstance = await GoodHeart.new({
-				from: _owner
-			});
-		});
-		it("should set owner correctly", async function() {
-			let owner = await goodHeartInstance.owner.call();
-
-			assert.strictEqual(owner, _owner, "The expected owner is not set");
-		});
-	});	
 
 	describe("submitting charity - tests with invalid data", async () => {
 		beforeEach(async function() {
@@ -80,7 +65,7 @@ contract('GoodHeart', async function(accounts) {
 			let createdCharityOwner = charity[0];
 			let createdCharityRepresenter = charity[1];
 			let createdCharityName = charity[2];
-			let createdCharityTotalFundsReq = charity[3].c[0];
+			let createdCharityTotalFundsReq = web3.fromWei(charity[3]).toNumber();
 			let createdCharityIsFunded = charity[4];
 
 			assert.strictEqual(createdCharityOwner, _owner, "Charity owner does not match");
@@ -92,7 +77,7 @@ contract('GoodHeart', async function(accounts) {
 
 		it("should set currentFundsForCharity[charityId] to 0", async function() {
 			let charity = await goodHeartInstance.getCharity.call(0);
-			let createdCharityCurrentFunds = charity[6].c[0];
+			let createdCharityCurrentFunds = web3.fromWei(charity[6]).toNumber();
 
 			assert.strictEqual(createdCharityCurrentFunds, 0, "Charity current funds collected are not 0");
 		});
@@ -103,40 +88,5 @@ contract('GoodHeart', async function(accounts) {
 
 			assert.strictEqual(charityContributionsCount, 0, "Charity contributions are not 0");
 		});
-	});
-
-	describe("giving money to charity - tests with invalid data", async () => {
-		before(async function() {
-			goodHeartInstance = await GoodHeart.new({
-				from: _owner
-			});
-			
-			let charityName = "TestName";
-			let representerName = "TestRepresenter";
-			let fundsRequest = web3.toWei(10);
-
-			await goodHeartInstance.submitCharity(charityName, representerName, fundsRequest);
-		});
-
-		it("should revert on 0 money given", async function() {
-			await expectThrow(goodHeartInstance.giveMoneyForCharity(0, {value: 0}));
-		});
-
-		it("should revert if charity is funded", async function() {
-			let charitiesCountResult = await goodHeartInstance.getCharitiesCount.call();
-
-			let charitiesCount = charitiesCountResult.c[0];
-
-			console.log("COUNT: " + charitiesCount);
-			// let moneyToGrantWei = parseInt(web3.toWei(10), 10);
-
-			// await goodHeartInstance.giveMoneyForCharity(0, {value: moneyToGrantWei});
-			// console.log(web3.eth.getBalance(web3.eth.accounts[1]).toNumber());
-			// await expectThrow(goodHeartInstance.giveMoneyForCharity(0, {value: moneyToGrantWei})); 
-		});
-	});
-
-	describe("giving money to charity - tests with valid data", async () => {
-
 	});
 });

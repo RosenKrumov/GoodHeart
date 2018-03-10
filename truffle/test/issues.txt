@@ -1,0 +1,9 @@
+UT:
+1) grant money to charity 
+	- overflow test
+	- current funds increase test
+2) add contribution to charity
+	- overflow test
+3) approve contribution to charity
+	- overflow test
+4) fallback function test

@@ -125,7 +125,6 @@ function addCharity(dir, charityDescription, charityId) {
 	if (!fs.existsSync(directoryToCreate)){
 	    try {
 		    fs.mkdirSync(directoryToCreate);
-		    fs.mkdirSync(directoryToCreate + "/approvedContributions");
 		    fs.mkdirSync(directoryToCreate + "/contributions");
 	    	fs.writeFileSync(directoryToCreate + "/" + fileToCreate, charityDescription);
 	    } catch(err) {
